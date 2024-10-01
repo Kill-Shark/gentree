@@ -23,14 +23,18 @@
 
 body{
 	font-family: Merriweather-regular;
+	height: 100vh;
 }
 
 header{
 	width: 100%;
-	height: 80px;
-	display: block;
+	min-height: 80px;
+	display: flex;
+	justify-content: center;
+	flex-direction: row;
+	align-items: center;
 	background-color: var(--main-color);
-
+	height: 5vh;
 }
 
 .inner-header{
@@ -62,6 +66,7 @@ header{
 		.version{
 			font-family: Merriweather-regular;
 			font-size: 50%;
+			color: var(--action-color);
 		}
 	}
 }
@@ -97,6 +102,10 @@ header{
 
 	.bar:hover .dropdown{
 		display: block;
+	}
+
+	.bar:hover .dropdown.closed{
+		display: none;
 	}
 }
 
@@ -140,17 +149,28 @@ header{
 	}
 }
 
-.wrapper{
-	height: 100vh;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+main{
+	height: 80vh;
+	canvas{
+		width: 100%;
+		height: 80vh;
+
+
+		background-color: #ffffff;
+		opacity: 0.1;
+		background-image: radial-gradient(#101010 2px, #ffffff 2px);
+		background-size: 40px 40px;
+	}
 }
 
 
-.banner{
-	padding: 100px;
-	border: 3px var(--main-color) solid;
-	border-radius: 3px;
-	box-shadow: 4px 4px 8px 2px rgba(34, 60, 80, 0.2);
+
+footer{
+	min-height: 180px;
+	height: 5vh;
+	width: 100%;
+	background-color: var(--main-color);
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
