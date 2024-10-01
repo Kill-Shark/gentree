@@ -151,16 +151,44 @@ header{
 
 main{
 	height: 80vh;
-	canvas{
-		width: 100%;
-		height: 80vh;
 
+	.canvas-wrapper{
+		position: relative;
+		canvas{
+			width: 100%;
+			height: 80vh;
+	
+	
+			background-color: #fff;
+			opacity: 0.1;
+			background-image: radial-gradient(#101010 2px, #ffffff 2px);
+			background-size: 40px 40px;
+		}
 
-		background-color: #ffffff;
-		opacity: 0.1;
-		background-image: radial-gradient(#101010 2px, #ffffff 2px);
-		background-size: 40px 40px;
+		.size-btn{
+			position: absolute;
+			bottom: 0px;
+			right: 0px;
+			background-color: transparent;
+			border: none;
+			padding: 5px 5px;
+			margin: 10px 5px;
+			cursor: pointer;
+			img{
+				height: 30px;
+				width: auto;
+				transition: .3s all ease;
+			}
+		}
+		.size-btn:hover{
+			img{
+				height: 35px;
+				width: auto;
+			}
+		}
 	}
+
+
 }
 
 

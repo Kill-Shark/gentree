@@ -18,6 +18,8 @@ btnExport = document.getElementById("btnExport");
 
 const dropdown = document.getElementById("dropdown")
 
+const canvasMain = document.getElementById("canvasMain")
+
 // автоматическое закрытие панели настроек после нажатия кнопки
 document.querySelectorAll(".dropdown-bar").forEach(n => n.addEventListener("click", ()=>{
 	dropdown.classList.add("closed");

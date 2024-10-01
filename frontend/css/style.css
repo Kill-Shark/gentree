@@ -136,13 +136,35 @@ header {
 main {
   height: 80vh;
 }
-main canvas {
+main .canvas-wrapper {
+  position: relative;
+}
+main .canvas-wrapper canvas {
   width: 100%;
   height: 80vh;
-  background-color: #ffffff;
+  background-color: #fff;
   opacity: 0.1;
   background-image: radial-gradient(#101010 2px, #ffffff 2px);
   background-size: 40px 40px;
+}
+main .canvas-wrapper .size-btn {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  background-color: transparent;
+  border: none;
+  padding: 5px 5px;
+  margin: 10px 5px;
+  cursor: pointer;
+}
+main .canvas-wrapper .size-btn img {
+  height: 30px;
+  width: auto;
+  transition: 0.3s all ease;
+}
+main .canvas-wrapper .size-btn:hover img {
+  height: 35px;
+  width: auto;
 }
 
 footer {
