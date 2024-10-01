@@ -118,6 +118,13 @@ header {
 .navbar .bar .dropdown li:last-child {
   padding-bottom: 20px;
 }
+.navbar .bar .dropdown #btnLoadInput {
+  display: none;
+}
+.navbar .bar .dropdown label {
+  display: inline-block;
+  color: #fff;
+}
 
 @media (max-width: 1100px) {
   .navbar .bar a {

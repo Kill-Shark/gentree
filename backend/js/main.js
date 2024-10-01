@@ -20,6 +20,9 @@ const dropdown = document.getElementById("dropdown")
 
 const canvasMain = document.getElementById("canvasMain")
 
+//кнопка для работы с импортируемым файлом
+const btnLoadInput = document.getElementById("btnLoadInput")
+
 // автоматическое закрытие панели настроек после нажатия кнопки
 document.querySelectorAll(".dropdown-bar").forEach(n => n.addEventListener("click", ()=>{
 	dropdown.classList.add("closed");
