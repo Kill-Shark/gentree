@@ -183,6 +183,9 @@ export class Person {
 							this.name_actual = name_override(this.name_actual, e[sym.NAME])
 						name_date = d
 					}
+				} else {
+					if (sym.NAME in e)
+						this.name_actual = name_override(this.name_actual, e[sym.NAME])
 				}
 				break
 			}
