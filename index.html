@@ -5,7 +5,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Gentree</title>
 	<link rel="stylesheet" href="./frontend/css/style.css">
-	<script src="./backend/js/main.js" defer></script>
+	<link rel="shortcut icon" href="#" />
+	<script src="./backend/js/main.js" type="module" defer></script>
 </head>
 <body>
 	<header>
@@ -35,14 +36,17 @@
 		</div>
 	</header>
 	<main>
+		<canvas width='1280' height='720' id="canvasMain">No canvas</canvas>
+		<!--
 		<div class="canvas-wrapper">
 			<canvas id="canvasMain"></canvas>
 			<button class="size-btn"><img src="./frontend/img/full-screen.png"></button>
 		</div>
+		-->
 
 	</main>
 	<footer>
 		<div class="inner-footer"></div>
-	</footer>	
+	</footer>
 </body>
 </html>
