@@ -24,19 +24,19 @@ export class Node {
 		this.rx = undefined
 		this.ry = undefined
 
-		this.connections = [false, false, false, false]
+		this.root_x = undefined
+		this.root_y = undefined
+		this.root_tx = undefined
+		this.root_ty = undefined
 
-		this.clear_hue()
+		this.hue = undefined
+
+		this.connections = [false, false, false, false]
 	}
 
 	clear() {
 		this.x = undefined
 		this.spreaded = false
-		this.tensions_checked = false
-	}
-
-	clear_hue() {
-		this.hue = undefined
 	}
 
 	connect(nodes) {
@@ -50,127 +50,64 @@ export class Node {
 			this.children.push(nodes[this.person.children[i].id - 1])
 	}
 
+	rooting(nodes, w) {
+		let offset = this.x
+
+		this.place_parents(nodes, w, offset)
+		for (let i in this.parents)
+			this.parents[i].rooting(nodes, w)
+
+		this.spread(nodes, w)
+	}
+
 	spread(nodes, w) {
 		if (this.spreaded)
 			return
 
-		switch (randint(6)) {
-		case 0:
-			this.place_parents(nodes, w)
-			this.place_mates(nodes, w)
-			this.place_children(nodes, w)
-			break
-
-		case 1:
-			this.place_parents(nodes, w)
-			this.place_children(nodes, w)
-			this.place_mates(nodes, w)
-			break
-
-		case 2:
-			this.place_mates(nodes, w)
-			this.place_parents(nodes, w)
-			this.place_children(nodes, w)
-			break
-
-		case 3:
-			this.place_mates(nodes, w)
-			this.place_children(nodes, w)
-			this.place_parents(nodes, w)
-			break
-
-		case 4:
-			this.place_children(nodes, w)
-			this.place_mates(nodes, w)
-			this.place_parents(nodes, w)
-			break
-
-		case 5:
-			this.place_children(nodes, w)
-			this.place_parents(nodes, w)
-			this.place_mates(nodes, w)
-			break
-		}
+		this.place_parents(nodes, w)
+		this.place_mates(nodes, w)
+		this.place_children(nodes, w)
 
 		this.spreaded = true
 
-		switch (randint(6)) {
-		case 0:
-			this.spread_parents(nodes, w)
-			this.spread_mates(nodes, w)
-			this.spread_children(nodes, w)
-			break
-
-		case 1:
-			this.spread_parents(nodes, w)
-			this.spread_children(nodes, w)
-			this.spread_mates(nodes, w)
-			break
-
-		case 2:
-			this.spread_mates(nodes, w)
-			this.spread_parents(nodes, w)
-			this.spread_children(nodes, w)
-			break
-
-		case 3:
-			this.spread_mates(nodes, w)
-			this.spread_children(nodes, w)
-			this.spread_parents(nodes, w)
-			break
-
-		case 4:
-			this.spread_children(nodes, w)
-			this.spread_mates(nodes, w)
-			this.spread_parents(nodes, w)
-			break
-
-		case 5:
-			this.spread_children(nodes, w)
-			this.spread_parents(nodes, w)
-			this.spread_mates(nodes, w)
-			break
-		}
-	}
-
-	spread_parents(nodes, w) {
 		for (let i in this.parents)
 			this.parents[i].spread(nodes, w)
-	}
 
-	spread_mates(nodes, w) {
 		for (let i in this.mates)
 			this.mates[i].spread(nodes, w)
-	}
 
-	spread_children(nodes, w) {
 		for (let i in this.children)
 			this.children[i].spread(nodes, w)
 	}
 
-	place_parents(nodes, w) {
+	place_parents(nodes, w, offset=0) {
 		for (let i in this.parents) {
 			let p = this.parents[i]
 			if (p.person.sex == sym.MALE) {
-				p.place(nodes, w, this.x, -(w / 2) - randint(w * 2))
+				p.place(nodes, w, this.x + offset, -(w / 2))
 			} else {
-				p.place(nodes, w, this.x, w / 2 + randint(w * 2))
+				p.place(nodes, w, this.x + offset, w / 2)
 			}
 		}
 	}
 
 	place_mates(nodes, w) {
-		let inc = w + randint(w * 2)
+		let inc = w / 4
 		if (this.person.sex == sym.FEMALE)
-			inc = -w
+			inc = -inc
 
 		for (let i in this.mates)
 			this.mates[i].place(nodes, w, this.x, inc)
 	}
 
 	place_children(nodes, w) {
-		for (let i in this.children)
-			this.children[i].place(nodes, w, this.x, randint(w * 2))
+		for (let i in this.children) {
+			let mate = this.children[i].get_other_parent(this)
+			if (mate != undefined)
+				this.children[i].place(nodes, w, (this.x + mate.x) / 2, 0)
+			else
+				this.children[i].place(nodes, w, this.x, 0)
+		}
 	}
 
 	place(nodes, w, x, mx) {
@@ -178,17 +115,14 @@ export class Node {
 			return
 
 		this.x = x
-		if (randint(2))
-			this.dodge(nodes, w, mx)
-		else
-			this.push(nodes, w, mx)
+		this.dodge(nodes, w, mx)
 	}
 
 	dodge(nodes, w, mx) {
 		this.x += mx
 
 		if (mx == 0)
-			mx = w / 3.14
+			mx = w / 4
 
 		for (let i = 0; i < nodes.length; i++) {
 			if (nodes[i] == this || nodes[i].x == undefined)
@@ -201,107 +135,27 @@ export class Node {
 		}
 	}
 
-	push(nodes, w, mx) {
-		this.x += mx
-
-		for (let i in nodes) {
-			if (nodes[i] == this || nodes[i].x == undefined)
-				continue
-
-			if (hit_test(this, nodes[i], w)) {
-				if (mx >= 0) {
-					if (this.x < nodes[i].x) {
-						nodes[i].push(nodes, w, w - (nodes[i].x - this.x))
-					} else {
-						nodes[i].push(nodes, w, w + (this.x - nodes[i].x))
-					}
-				} else {
-					if (this.x < nodes[i].x) {
-						nodes[i].push(nodes, w, -w - (nodes[i].x - this.x))
-					} else {
-						nodes[i].push(nodes, w, -w + (this.x - nodes[i].x))
-					}
-				}
-			}
-		}
-	}
-
-	get_tensions() {
-		this.tensions_checked = true
-
-		let tensions = []
-
-		for (let i in this.mates) {
-			let mate = this.mates[i]
-			if (mate.tensions_checked)
-				continue
-
-			tensions.push(Math.abs(this.x - mate.x))
-		}
-
-		return tensions
-	}
-
-	get_covering(nodes, w) {
-		let c = 0
-		for (let i in this.mates) {
-			let mid_x = (this.x + this.mates[i].x) / 2
-			let mid_y = (this.y + this.mates[i].y) / 2
-			for (let k in nodes)
-				if (hit_test_point(nodes[k], w, mid_x, mid_y))
-					c += 1
-		}
-		return c
-	}
-
-	get_hue() {
-		if (this.hue != undefined)
-			return this.hue
-
-		if (this.parents.length == 0) {
-			this.hue = randint(360)
-
-		} else if (this.parents.length == 1) {
-			this.hue = this.parents[0].get_hue()
-
-		} else {
-			this.hue = (this.parents[0].get_hue() - this.parents[1].get_hue()) % 360
-		}
-
-		return this.hue
-	}
-
-	get_jazz() {
-		let diff = function(a, b) {
-			let d = Math.abs(a - b)
-			if (d > 180)
-				d = 360 - d
-			return d
-		}
-
-		let jazz = 0
-		for (let i in this.mates)
-			jazz += diff(this.hue, this.mates[i].hue)
-
-		return jazz
+	get_other_parent(p) {
+		for (let i in this.parents)
+			if (this.parents[i] != p)
+				return this.parents[i]
 	}
 
 	get_root() {
-		if (this.parents.length == 0)
-			return undefined
-
 		if (this.parents.length == 1) {
 			this.parents[0].connections[2] = true
-			return [this.parents[0].x, this.parents[0].y + HEIGHT / 2.4]
-		}
 
-		if (this.parents.length == 2) {
+			this.root_x = this.parents[0].x
+			this.root_y = this.parents[0].y + HEIGHT / 2.4
+
+		} else if (this.parents.length == 2) {
 			let fx = this.parents[0].x
 			let fy = this.parents[0].y
 			let mx = this.parents[1].x
 			let my = this.parents[1].y
 
-			return [(fx + mx) / 2, (fy + my) / 2]
+			this.root_x = (fx + mx) / 2
+			this.root_y = (fy + my) / 2
 		}
 	}
 }

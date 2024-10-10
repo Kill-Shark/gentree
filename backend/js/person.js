@@ -148,6 +148,8 @@ export class Person {
 	update() {
 		let name_date = new GtDate("0")
 
+		this.title = undefined
+
 		for (let i = 0; i < this.subj.length; i++) {
 			let e = this.subj[i]
 			switch (e[sym.TYPE]) {
@@ -189,6 +191,12 @@ export class Person {
 				}
 				break
 			}
+
+			if (this.title == undefined && sym.ASSETS in e) {
+				let assets = e[sym.ASSETS]
+				if (assets.length > 0)
+					this.title = assets[0]
+			}
 		}
 
 		for (let i = 0; i < this.part.length; i++) {
@@ -212,6 +220,34 @@ export class Person {
 				if (sym_spouse in e && this.mates.indexOf(e[sym_parent]) < 0)
 					this.mates.push(e[sym_spouse])
 				break
+			}
+		}
+
+		if (this.title) {
+			let ext = this.title.split('.').pop()
+			let img = new Image()
+
+			let data = undefined
+			for (let te in this.tar)
+				if (this.tar[te].name == this.title) {
+					data = this.tar[te].data
+					break
+				}
+
+			if (data != undefined) {
+				let len = data.length
+				let bin = [len]
+				while (len--)
+					bin[len] = String.fromCharCode(data[len])
+
+				data = bin.join('')
+				data = window.btoa(data)
+
+				img.src = "data:image/" + ext + ";base64," + data;
+				this.title = img
+
+			} else {
+				this.title = undefined
 			}
 		}
 	}

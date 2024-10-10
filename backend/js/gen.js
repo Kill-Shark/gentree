@@ -81,6 +81,7 @@ export class Gen {
 		for (let i = 0; i < this.people.length; i++) {
 			let p = this.people[i]
 			if (p != undefined) {
+				p.tar = this.tar
 				p.update()
 			}
 		}
@@ -101,10 +102,10 @@ export class Gen {
 		}
 	}
 
-	tree_get(w, h) {
+	tree_get(type, w, h) {
 		let tree = new Tree(this.people)
 
-		tree.build(w, h)
+		tree.build(type, w, h)
 
 		return tree
 	}

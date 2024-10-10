@@ -10,6 +10,11 @@ import {rand_seed_set} from "./random.js"
 
 import * as sym from "./sym.js"
 
+export const types = {
+	COMMON: 1,
+	SIMPLE: 2,
+};
+
 const BIG = 1000000
 const HUGE = 999999999
 
@@ -27,119 +32,28 @@ export class Tree {
 		this.bg = bg
 	}
 
-	build(node_w, node_h, gap=0.2) {
+	build(type, node_w, node_h, base, gap=0.2) {
 		this.node_w = node_w
 		this.node_h = node_h
 
 		this.scale = (node_h + node_h * gap) / nd.HEIGHT
 		this.nw = (node_w + node_w * gap) / this.scale
 
-		let make = function(nodes, nw, seed) {
-			rand_seed_set(seed)
-			let f = randint(nodes.length)
-			nodes[f].place(nodes, nw, 0, 0)
-			nodes[f].spread(nodes, nw)
+		if (base == undefined)
+			base = 0
+
+		switch (type) {
+		case types.COMMON:
+			this.nodes[base].x = 0
+			this.nodes[base].rooting(this.nodes, this.nw)
+			for (let i in this.nodes)
+				this.nodes[i].x *= 2
+			break
+
+		case types.SIMPLE:
+			;
+			break
 		}
-
-		let oks = 0
-		let noks = 0
-		let seed = 0
-		let highest_width = 0
-		let lowest_tension = HUGE
-		let lowest_covering = HUGE
-		for (let i = 0; i < BIG; i++) {
-			let seed_next = randint(BIG)
-
-			make(this.nodes, this.nw, seed_next)
-
-			let min = HUGE
-			let max = -HUGE
-			for (let k in this.nodes) {
-				let node = this.nodes[k]
-				if (node.x < min)
-					min = node.x
-				if (node.x > max)
-					max = node.x
-			}
-
-			let wid = max - min
-
-			let tensions = []
-			for (let k in this.nodes)
-				tensions.push(...this.nodes[k].get_tensions())
-
-			tensions.sort((a, b) => a > b)
-			let med = tensions[Math.floor(tensions.length / 2)]
-
-			let covering = 0
-			for (let k in this.nodes)
-				covering += this.nodes[k].get_covering(this.nodes, this.nw)
-
-			if (wid > highest_width &&
-				med < lowest_tension &&
-				covering < lowest_covering) {
-				highest_width = wid
-				lowest_tension = med
-				lowest_covering = covering
-				seed = seed_next
-				oks += 1
-
-			} else {
-				noks += 1
-				if (noks > this.nodes.length * 100)
-					break
-			}
-
-			if (oks > this.nodes.length / 10)
-				break
-
-			for (let k in this.nodes)
-				this.nodes[k].clear()
-		}
-
-		for (let k in this.nodes)
-			this.nodes[k].clear()
-
-		make(this.nodes, this.nw, seed)
-
-		oks = 0
-		noks = 0
-		let lowest = HUGE
-		for (let i = 0; i < BIG; i++) {
-			let seed_next = randint(HUGE)
-
-			for (let k in this.nodes)
-				this.nodes[k].get_hue()
-
-			let jazz = 0
-			for (let k in this.nodes)
-				jazz += this.nodes[k].get_jazz()
-
-			if (jazz < lowest) {
-				seed = seed_next
-				lowest = jazz
-				oks += 1
-
-			} else {
-				noks += 1
-
-				if (noks > this.nodes.length * 100)
-					break
-			}
-
-			if (oks > this.nodes.length / 10)
-				break
-
-			for (let k in this.nodes)
-				this.nodes[k].clear_hue()
-		}
-
-		for (let k in this.nodes)
-			this.nodes[k].clear_hue()
-
-		rand_seed_set(seed)
-		for (let k in this.nodes)
-			this.nodes[k].get_hue()
 
 		this.min_x = 9999999999
 		this.min_y = 9999999999
@@ -168,6 +82,18 @@ export class Tree {
 
 		this.max_x += this.nw
 		this.max_y += nd.HEIGHT
+
+		this.info_x = this.node_w / 2 - this.node_w * 0.1
+
+		this.title_margin = node_h / 10
+		this.title_w = this.info_x - this.title_margin * 2
+		this.title_h = this.title_w / 3 * 4
+
+		let max_h = this.node_h - this.title_margin * 2
+		if (this.title_h > max_h) {
+			this.title_h = max_h
+			this.title_w = max_h / 4 * 3
+		}
 	}
 
 	fit(sheet) {
@@ -180,15 +106,23 @@ export class Tree {
 		let w = this.node_w * zoom
 		let h = this.node_h * zoom
 
+		rand_seed_set(0)
+
 		for (let i in this.nodes) {
 			let node = this.nodes[i]
 			if (node.hidden)
 				continue
 
+			node.hue = randint(360)
+
 			node.tx = (node.x - this.min_x) * this.scale * zoom + pan_x
 			node.ty = (node.y - this.min_y) * this.scale * zoom + pan_y
 			node.rx = node.tx - w / 2
 			node.ry = node.ty - h / 2
+
+			node.get_root()
+			node.root_tx = (node.root_x - this.min_x) * this.scale * zoom + pan_x
+			node.root_ty = (node.root_y - this.min_y) * this.scale * zoom + pan_y
 		}
 
 		ctx.fillStyle = this.bg
@@ -224,24 +158,20 @@ export class Tree {
 					node.connections[3] = true
 				}
 
-				this.draw_qcurve(ctx, 4, node.get_hue(),
+				this.draw_qcurve(ctx, 4, node.hue,
 								 mid_x, mid_y,
 								 mid_x, node.ty,
 								 node_grab_x, node.ty)
 			}
 
-			let root = node.get_root()
-			if (root != undefined) {
+			if (node.root_x != undefined) {
 				node.connections[0] = true
 
-				let root_x = (root[0] - this.min_x) * this.scale * zoom + pan_x
-				let root_y = (root[1] - this.min_y) * this.scale * zoom + pan_y
-
-				let mid_y = (node.ry + root_y) / 2
+				let mid_y = (node.ry + node.root_ty) / 2
 
 				this.draw_curve(ctx, 4, node.hue,
 								node.tx, node.ty - h / 2,
-								node.tx, mid_y, root_x, mid_y, root_x, root_y)
+								node.tx, mid_y, node.root_tx, mid_y, node.root_tx, node.root_ty)
 			}
 		}
 
@@ -255,10 +185,10 @@ export class Tree {
 			ctx.strokeRect(node.rx, node.ry, w, h)
 
 			ctx.lineWidth = 4
-			ctx.strokeStyle = "HSL(" + node.hue + ", 70%, 50%)"
+			ctx.strokeStyle = "HSL(" + node.hue + ", 20%, 50%)"
 			ctx.strokeRect(node.rx, node.ry, w, h)
 
-			ctx.fillStyle = "HSL(" + node.hue + ", 70%, 50%)"
+			ctx.fillStyle = "HSL(" + node.hue + ", 20%, 50%)"
 
 			let t = 6
 			let th = 3
@@ -288,7 +218,7 @@ export class Tree {
 
 			let ceil = node.ty - this.node_h * 0.3 * zoom
 			let step = fs * 1.2
-			let x = node.tx - this.node_w * zoom * 0.1
+			let x = node.rx + this.info_x * zoom
 
 			let p = node.person
 			if (sym.LAST in p.name_actual) {
@@ -305,6 +235,13 @@ export class Tree {
 				ctx.fillText("* " + p.birth.to_string(), x, ceil + step * 4)
 			if (p.death)
 				ctx.fillText("+ " + p.death.to_string(), x, ceil + step * 5)
+
+			if (p.title)
+				ctx.drawImage(p.title,
+							  node.rx + this.title_margin * zoom,
+							  node.ry + this.title_margin * zoom,
+							  this.title_w * zoom,
+							  this.title_h * zoom)
 		}
 	}
 
@@ -316,7 +253,7 @@ export class Tree {
 		ctx.stroke()
 
 		ctx.lineWidth = width
-		ctx.strokeStyle = "HSL(" + hue + ", 70%, 50%)"
+		ctx.strokeStyle = "HSL(" + hue + ", 20%, 50%)"
 		ctx.moveTo(x0, y0)
 		ctx.bezierCurveTo(x1, y1, x2, y2, x3, y3)
 		ctx.stroke()
@@ -330,7 +267,7 @@ export class Tree {
 		ctx.stroke()
 
 		ctx.lineWidth = width
-		ctx.strokeStyle = "HSL(" + hue + ", 70%, 50%)"
+		ctx.strokeStyle = "HSL(" + hue + ", 20%, 50%)"
 		ctx.moveTo(x0, y0)
 		ctx.quadraticCurveTo(x1, y1, x2, y2)
 		ctx.stroke()
