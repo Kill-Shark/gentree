@@ -46,6 +46,7 @@ export class Tree {
 		case types.COMMON:
 			this.nodes[base].x = 0
 			this.nodes[base].rooting(this.nodes, this.nw)
+			this.nodes[base].spread(this.nodes, this.nw)
 			for (let i in this.nodes)
 				this.nodes[i].x *= 2
 			break
@@ -82,18 +83,6 @@ export class Tree {
 
 		this.max_x += this.nw
 		this.max_y += nd.HEIGHT
-
-		this.info_x = this.node_w / 2 - this.node_w * 0.1
-
-		this.title_margin = node_h / 10
-		this.title_w = this.info_x - this.title_margin * 2
-		this.title_h = this.title_w / 3 * 4
-
-		let max_h = this.node_h - this.title_margin * 2
-		if (this.title_h > max_h) {
-			this.title_h = max_h
-			this.title_w = max_h / 4 * 3
-		}
 	}
 
 	fit(sheet) {
@@ -216,9 +205,18 @@ export class Tree {
 			let fs = this.node_h / 9 * zoom
 			ctx.font = "" + fs + "px sans"
 
+			let title_ratio = 0.75
+			if (node.title_ratio)
+				title_ratio = node.title_ratio
+
+			let title_margin = this.node_h / 10
+			let title_h = this.node_h - title_margin * 2
+			let title_w = title_h * title_ratio
+			let info_x = title_margin * 2 + title_w
+
 			let ceil = node.ty - this.node_h * 0.3 * zoom
 			let step = fs * 1.2
-			let x = node.rx + this.info_x * zoom
+			let x = node.rx + info_x * zoom
 
 			let p = node.person
 			if (sym.LAST in p.name_actual) {
@@ -238,10 +236,10 @@ export class Tree {
 
 			if (p.title)
 				ctx.drawImage(p.title,
-							  node.rx + this.title_margin * zoom,
-							  node.ry + this.title_margin * zoom,
-							  this.title_w * zoom,
-							  this.title_h * zoom)
+							  node.rx + title_margin * zoom,
+							  node.ry + title_margin * zoom,
+							  title_w * zoom,
+							  title_h * zoom)
 		}
 	}
 

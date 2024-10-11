@@ -33,17 +33,16 @@ export function tar_load(tar, file) {
 
 		let e = new TarEntry()
 
-		e.name = []
-		for (let k = 0; k < 100; k++) {
-			if (file[i + k] == 0)
+		let end = 0
+		for (; end < 100; end++)
+			if (file[i + end] == 0)
 				break
-			e.name.push(file[i + k])
-		}
 
-		if (e.name[e.name.length - 1] == 0x2F)
-			e.name = e.name.slice(0, e.name.length - 1)
+		if (file[i + end - 1] == 0x2F)
+			end--
 
-		e.name = String.fromCharCode(...e.name)
+		let decoder = new TextDecoder("utf-8")
+		e.name = decoder.decode(file.slice(i, i + end))
 
 		let size = String.fromCharCode(...file.slice(i + 124, i + 135))
 		size = parseInt(size, 8)

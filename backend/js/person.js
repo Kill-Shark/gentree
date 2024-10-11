@@ -246,6 +246,11 @@ export class Person {
 				img.src = "data:image/" + ext + ";base64," + data;
 				this.title = img
 
+				img.onload = function() {
+					this.title_ratio = img.width / img.height
+				}
+
+
 			} else {
 				this.title = undefined
 			}

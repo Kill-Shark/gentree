@@ -51,13 +51,9 @@ export class Node {
 	}
 
 	rooting(nodes, w) {
-		let offset = this.x
-
-		this.place_parents(nodes, w, offset)
+		this.place_parents(nodes, w, true)
 		for (let i in this.parents)
 			this.parents[i].rooting(nodes, w)
-
-		this.spread(nodes, w)
 	}
 
 	spread(nodes, w) {
@@ -80,33 +76,44 @@ export class Node {
 			this.children[i].spread(nodes, w)
 	}
 
-	place_parents(nodes, w, offset=0) {
+	place_parents(nodes, w, offset=false) {
 		for (let i in this.parents) {
 			let p = this.parents[i]
+
+			let x = this.x
+			if (offset)
+				x *= 2
+
 			if (p.person.sex == sym.MALE) {
-				p.place(nodes, w, this.x + offset, -(w / 2))
+				p.place(nodes, w, x, -(w / 2))
 			} else {
-				p.place(nodes, w, this.x + offset, w / 2)
+				p.place(nodes, w, x, w / 2)
 			}
 		}
 	}
 
 	place_mates(nodes, w) {
-		let inc = w / 4
-		if (this.person.sex == sym.FEMALE)
+		let x = this.x + w
+		let inc = w / 4.31
+		if (this.person.sex == sym.FEMALE) {
 			inc = -inc
+			x = this.x - w
+		}
 
 		for (let i in this.mates)
-			this.mates[i].place(nodes, w, this.x, inc)
+			this.mates[i].place(nodes, w, x, inc)
 	}
 
 	place_children(nodes, w) {
 		for (let i in this.children) {
 			let mate = this.children[i].get_other_parent(this)
+
+			let x = this.x
 			if (mate != undefined)
-				this.children[i].place(nodes, w, (this.x + mate.x) / 2, 0)
-			else
-				this.children[i].place(nodes, w, this.x, 0)
+				x = (this.x + mate.x) / 2
+			x += randint(w * 2) - w
+
+			this.children[i].place(nodes, w, x, 0)
 		}
 	}
 
@@ -122,7 +129,7 @@ export class Node {
 		this.x += mx
 
 		if (mx == 0)
-			mx = w / 4
+			mx = w / 4.13
 
 		for (let i = 0; i < nodes.length; i++) {
 			if (nodes[i] == this || nodes[i].x == undefined)
