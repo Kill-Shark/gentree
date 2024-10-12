@@ -3,7 +3,6 @@
  */
 
 import {Gen} from "./gen.js"
-import {types} from "./tree.js"
 
 let gen
 let tree
@@ -68,7 +67,7 @@ function build_tree(e) {
 	if (gen == undefined)
 		return
 
-	tree = gen.tree_get(types.COMMON, 200, 100)
+	tree = gen.tree_get()
 	zoom = tree.fit(canvasMain)
 	tree.draw(canvasMain, zoom, pan_x, pan_y)
 }

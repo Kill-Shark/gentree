@@ -16,6 +16,8 @@ export class Person {
 		this.mates = []
 		this.children = []
 
+		this.hidden = false
+
 		this.clear()
 	}
 

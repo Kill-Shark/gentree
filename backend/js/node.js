@@ -6,37 +6,28 @@ import {randint} from "./random.js"
 
 import * as sym from "./sym.js"
 
-export const HEIGHT = 5
-
 export class Node {
 	constructor(person) {
 		this.person = person
-		this.y = person.get_y()
 
 		this.clear()
 
 		this.parents = []
 		this.mates = []
 		this.children = []
-
-		this.tx = undefined
-		this.ty = undefined
-		this.rx = undefined
-		this.ry = undefined
-
-		this.root_x = undefined
-		this.root_y = undefined
-		this.root_tx = undefined
-		this.root_ty = undefined
-
-		this.hue = undefined
-
-		this.connections = [false, false, false, false]
 	}
 
 	clear() {
 		this.x = undefined
+		this.y = undefined
+		this.root_x = undefined
+		this.root_y = undefined
+
+		this.hue = undefined
+
 		this.spreaded = false
+
+		this.connections = [false, false, false, false]
 	}
 
 	connect(nodes) {
@@ -50,92 +41,117 @@ export class Node {
 			this.children.push(nodes[this.person.children[i].id - 1])
 	}
 
-	rooting(nodes, w) {
-		this.place_parents(nodes, w, true)
-		for (let i in this.parents)
-			this.parents[i].rooting(nodes, w)
+	is_hidden() {
+		return this.person.hidden
 	}
 
-	spread(nodes, w) {
+	spread(nodes, view) {
 		if (this.spreaded)
 			return
 
-		this.place_parents(nodes, w)
-		this.place_mates(nodes, w)
-		this.place_children(nodes, w)
+		this.place_parents(nodes, view, this)
+		this.place_mates(nodes, view)
+		this.place_children(nodes, view)
 
 		this.spreaded = true
 
 		for (let i in this.parents)
-			this.parents[i].spread(nodes, w)
+			this.parents[i].spread(nodes, view)
 
 		for (let i in this.mates)
-			this.mates[i].spread(nodes, w)
+			this.mates[i].spread(nodes, view)
 
 		for (let i in this.children)
-			this.children[i].spread(nodes, w)
+			this.children[i].spread(nodes, view)
 	}
 
-	place_parents(nodes, w, offset=false) {
+	place_parents(nodes, view, base) {
+		let crowd = [this]
+
 		for (let i in this.parents) {
 			let p = this.parents[i]
 
-			let x = this.x
-			if (offset)
-				x *= 2
+			let x = (this.x - base.x) * 2
+			let mx = view.fw / 2
 
-			if (p.person.sex == sym.MALE) {
-				p.place(nodes, w, x, -(w / 2))
-			} else {
-				p.place(nodes, w, x, w / 2)
+			if (p.person.sex == sym.MALE)
+				mx = -mx
+
+			p.place(crowd, view, x, mx)
+
+			crowd.push(...p.place_parents(nodes, view, base))
+		}
+
+		for (let i = 0; i < nodes.length; i++) {
+			let node = nodes[i]
+			if (node.is_hidden())
+				continue
+
+			for (let k = 0; k < crowd.length; k++) {
+				if (node == crowd[k])
+					continue
+
+				if (node.hit_test(crowd[k], view)) {
+					if (base.x > 0) {
+						for (let k in crowd)
+							crowd[k].x += view.fw / 2
+					} else {
+						for (let k in crowd)
+							crowd[k].x -= view.fw / 2
+					}
+					i = -1
+					k = -1
+				}
 			}
 		}
+
+		return crowd
 	}
 
-	place_mates(nodes, w) {
-		let x = this.x + w
-		let inc = w / 4.31
+	place_mates(nodes, view) {
+		let x = this.x + view.w
+		let inc = view.w / 4.31
 		if (this.person.sex == sym.FEMALE) {
 			inc = -inc
-			x = this.x - w
+			x = this.x - view.w
 		}
 
 		for (let i in this.mates)
-			this.mates[i].place(nodes, w, x, inc)
+			this.mates[i].place(nodes, view, x, inc)
 	}
 
-	place_children(nodes, w) {
+	place_children(nodes, view) {
 		for (let i in this.children) {
 			let mate = this.children[i].get_other_parent(this)
 
 			let x = this.x
 			if (mate != undefined)
 				x = (this.x + mate.x) / 2
-			x += randint(w * 2) - w
 
-			this.children[i].place(nodes, w, x, 0)
+			if (x >= 0)
+				x += randint(view.w)
+			else
+				x -= randint(view.w)
+
+			this.children[i].place(nodes, view, x, 0)
 		}
 	}
 
-	place(nodes, w, x, mx) {
+	place(nodes, view, x, mx) {
 		if (this.x != undefined)
 			return
 
-		this.x = x
-		this.dodge(nodes, w, mx)
-	}
-
-	dodge(nodes, w, mx) {
-		this.x += mx
+		this.x = x + mx
 
 		if (mx == 0)
-			mx = w / 4.13
+			mx = view.w / 4.13
 
 		for (let i = 0; i < nodes.length; i++) {
-			if (nodes[i] == this || nodes[i].x == undefined)
+			let node = nodes[i]
+			if (node.is_hidden() || node == this || node.x == undefined)
 				continue
 
-			if (hit_test(this, nodes[i], w)) {
+			if (this.hit_test(node, view)) {
 				this.x += mx
 				i = -1
 			}
@@ -148,12 +164,12 @@ export class Node {
 				return this.parents[i]
 	}
 
-	get_root() {
+	get_root(view) {
 		if (this.parents.length == 1) {
 			this.parents[0].connections[2] = true
 
 			this.root_x = this.parents[0].x
-			this.root_y = this.parents[0].y + HEIGHT / 2.4
+			this.root_y = this.parents[0].y + view.h / 2.4
 
 		} else if (this.parents.length == 2) {
 			let fx = this.parents[0].x
@@ -165,22 +181,13 @@ export class Node {
 			this.root_y = (fy + my) / 2
 		}
 	}
-}
 
-function hit_test(a, b, w) {
-	if (Math.abs(a.x - b.x) < w &&
-		Math.abs(a.y - b.y) < HEIGHT) {
-		return true
+	hit_test(node, view) {
+		if (Math.abs(this.x - node.x) < view.fw &&
+			Math.abs(this.y - node.y) < view.fh) {
+			return true
+		}
+
+		return false
 	}
-
-	return false
-}
-
-function hit_test_point(node, w, px, py) {
-	if (Math.abs(node.x - px) < w / 2 &&
-		Math.abs(node.y - py) < HEIGHT / 2) {
-		return true
-	}
-
-	return false
 }

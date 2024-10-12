@@ -10,13 +10,24 @@ import {rand_seed_set} from "./random.js"
 
 import * as sym from "./sym.js"
 
-export const types = {
-	COMMON: 1,
-	SIMPLE: 2,
-};
-
 const BIG = 1000000
 const HUGE = 999999999
+
+const VIEW = {
+	name: "default",
+	type: "all",
+	w: 10,
+	h: 5,
+	margin: 1,
+	color: {
+		male: "#9999cc",
+		female: "#cc9999"
+	},
+	base: 0,
+
+	fw: 11,
+	fh: 6
+}
 
 export class Tree {
 	constructor(people, bg="#222222") {
@@ -32,29 +43,50 @@ export class Tree {
 		this.bg = bg
 	}
 
-	build(type, node_w, node_h, base, gap=0.2) {
-		this.node_w = node_w
-		this.node_h = node_h
+	foreach(func) {
+		for (let i in this.nodes) {
+			let node = this.nodes[i]
+			if (node.is_hidden())
+				continue
 
-		this.scale = (node_h + node_h * gap) / nd.HEIGHT
-		this.nw = (node_w + node_w * gap) / this.scale
+			func(node)
+		}
+	}
 
-		if (base == undefined)
-			base = 0
+	build(view=VIEW) {
+		this.view = view
 
-		switch (type) {
-		case types.COMMON:
-			this.nodes[base].x = 0
-			this.nodes[base].rooting(this.nodes, this.nw)
-			this.nodes[base].spread(this.nodes, this.nw)
-			for (let i in this.nodes)
-				this.nodes[i].x *= 2
+		this.foreach((node) => {
+			node.clear()
+		})
+
+		switch (view.type) {
+		case "all":
+			this.foreach((node) => {
+				node.y = node.person.get_y()
+			})
+
+			let base = this.nodes[view.base]
+			base.x = 0
+			base.spread(this.nodes, view)
+
+			this.foreach((node) => {
+				node.x *= 2
+			})
 			break
 
-		case types.SIMPLE:
+		case "simple":
+			;
+			break
+
+		case "layout":
 			;
 			break
 		}
+
+		this.foreach((node) => {
+			node.get_root(view)
+		})
 
 		this.min_x = 9999999999
 		this.min_y = 9999999999
@@ -64,7 +96,7 @@ export class Tree {
 
 		for (let i in this.nodes) {
 			let node = this.nodes[i]
-			if (node == undefined)
+			if (node.is_hidden())
 				continue
 
 			if (node.x < this.min_x)
@@ -78,40 +110,40 @@ export class Tree {
 				this.max_y = node.y
 		}
 
-		this.min_x -= this.nw
-		this.min_y -= nd.HEIGHT
+		this.min_x -= view.w
+		this.min_y -= view.h
 
-		this.max_x += this.nw
-		this.max_y += nd.HEIGHT
+		this.max_x += view.w
+		this.max_y += view.h
 	}
 
 	fit(sheet) {
-		return sheet.height / this.scale / (this.max_y - this.min_y)
+		return sheet.height / (this.max_y - this.min_y)
 	}
 
 	draw(sheet, zoom, pan_x, pan_y) {
 		let ctx = sheet.getContext("2d")
 
-		let w = this.node_w * zoom
-		let h = this.node_h * zoom
+		let w = this.view.w * zoom
+		let h = this.view.h * zoom
 
 		rand_seed_set(0)
 
 		for (let i in this.nodes) {
 			let node = this.nodes[i]
-			if (node.hidden)
+			if (node.is_hidden())
 				continue
 
-			node.hue = randint(360)
+			if (node.hue == undefined)
+				node.hue = randint(360)
 
-			node.tx = (node.x - this.min_x) * this.scale * zoom + pan_x
-			node.ty = (node.y - this.min_y) * this.scale * zoom + pan_y
+			node.tx = (node.x - this.min_x) * zoom + pan_x
+			node.ty = (node.y - this.min_y) * zoom + pan_y
 			node.rx = node.tx - w / 2
 			node.ry = node.ty - h / 2
 
-			node.get_root()
-			node.root_tx = (node.root_x - this.min_x) * this.scale * zoom + pan_x
-			node.root_ty = (node.root_y - this.min_y) * this.scale * zoom + pan_y
+			node.root_tx = (node.root_x - this.min_x) * zoom + pan_x
+			node.root_ty = (node.root_y - this.min_y) * zoom + pan_y
 		}
 
 		ctx.fillStyle = this.bg
@@ -121,14 +153,14 @@ export class Tree {
 		line.sort((a, b) => a.y < b.y)
 		for (let i in line) {
 			let node = line[i]
-			if (node.hidden)
+			if (node.is_hidden())
 				continue
 
 			ctx.beginPath()
 
 			for (let k in node.mates) {
 				let mate = node.mates[k]
-				if (mate.hidden)
+				if (mate.is_hidden())
 					continue
 
 				let mid_x = (node.tx + mate.tx) / 2
@@ -166,7 +198,7 @@ export class Tree {
 
 		for (let i in this.nodes) {
 			let node = this.nodes[i]
-			if (node == undefined)
+			if (node.is_hidden())
 				continue
 
 			ctx.lineWidth = 8
@@ -202,21 +234,21 @@ export class Tree {
 			ctx.fillRect(node.rx, node.ry, w, h)
 
 			ctx.fillStyle = "#111111"
-			let fs = this.node_h / 9 * zoom
+			let fs = h / 9
 			ctx.font = "" + fs + "px sans"
 
 			let title_ratio = 0.75
 			if (node.title_ratio)
 				title_ratio = node.title_ratio
 
-			let title_margin = this.node_h / 10
-			let title_h = this.node_h - title_margin * 2
+			let title_margin = h / 10
+			let title_h = h - title_margin * 2
 			let title_w = title_h * title_ratio
 			let info_x = title_margin * 2 + title_w
 
-			let ceil = node.ty - this.node_h * 0.3 * zoom
+			let ceil = node.ty - h * 0.3
 			let step = fs * 1.2
-			let x = node.rx + info_x * zoom
+			let x = node.rx + info_x
 
 			let p = node.person
 			if (sym.LAST in p.name_actual) {
@@ -236,10 +268,10 @@ export class Tree {
 
 			if (p.title)
 				ctx.drawImage(p.title,
-							  node.rx + title_margin * zoom,
-							  node.ry + title_margin * zoom,
-							  title_w * zoom,
-							  title_h * zoom)
+							  node.rx + title_margin,
+							  node.ry + title_margin,
+							  title_w,
+							  title_h)
 		}
 	}
 
