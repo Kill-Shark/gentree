@@ -161,14 +161,23 @@ export class Node {
 			this.root_y = this.parents[0].y + view.h / 2.4
 
 		} else if (this.parents.length == 2) {
-			let fx = this.parents[0].x
-			let fy = this.parents[0].y
-			let mx = this.parents[1].x
-			let my = this.parents[1].y
+			let mid = this.parents[0].get_middle(this.parents[1], view)
 
-			this.root_x = (fx + mx) / 2
-			this.root_y = (fy + my) / 2
+			this.root_x = mid[0]
+			this.root_y = mid[1]
 		}
+	}
+
+	get_middle(node, view) {
+		let mx = (this.x + node.x) / 2
+		let my = (this.y + node.y) / 2
+		if (Math.abs(this.y - node.y) < view.h)
+			if (this.y > node.y)
+				my = this.y + view.h / 2
+			else
+				my = node.y + view.h / 2
+
+		return [mx, my]
 	}
 
 	hit_test(node, view) {

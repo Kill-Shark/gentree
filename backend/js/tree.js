@@ -15,18 +15,19 @@ const HUGE = 999999999
 
 const VIEW = {
 	name: "default",
-	type: "all",
+	type: sym.COMMON,
 	w: 10,
 	h: 5,
-	margin: 1,
+	gap: 1,
+	margin: 0.5,
 	color: {
 		male: "#9999cc",
 		female: "#cc9999"
 	},
 	base: 0,
 
-	fw: 11,
-	fh: 6
+	fw: 12,
+	fh: 7
 }
 
 export class Tree {
@@ -73,7 +74,7 @@ export class Tree {
 		})
 
 		switch (view.type) {
-		case "all":
+		case sym.COMMON:
 			this.foreach((node) => {
 				node.y = node.person.get_y()
 			})
@@ -87,12 +88,27 @@ export class Tree {
 			})
 			break
 
-		case "simple":
-			;
-			break
+		case sym.LAYOUT:
+			this.foreach((node) => {
+				node.x = 0
+				node.hue = 0
+				node.y = node.person.get_y()
+			})
 
-		case "layout":
-			;
+			for (let i in view.layout) {
+				let layout = view.layout[i]
+				let num = layout[sym.SUBJECT]
+				let node = this.nodes[num]
+
+				if ("x" in layout)
+					node.x = layout.x
+
+				if ("y" in layout)
+					node.y = layout.y
+
+				if ("hue" in layout)
+					node.hue = layout.hue
+			}
 			break
 		}
 
@@ -175,8 +191,9 @@ export class Tree {
 				if (mate.is_hidden())
 					continue
 
-				let mid_x = (node.tx + mate.tx) / 2
-				let mid_y = (node.ty + mate.ty) / 2
+				let mid = node.get_middle(mate, this.view)
+				let mid_x = (mid[0] - this.min_x) * zoom + pan_x
+				let mid_y = (mid[1] - this.min_y) * zoom + pan_y
 
 				let node_grab_x = 0
 				let mate_grab_x = 0
@@ -191,10 +208,12 @@ export class Tree {
 					node.connections[3] = true
 				}
 
-				this.draw_qcurve(ctx, 4, node.hue,
-								 mid_x, mid_y,
-								 mid_x, node.ty,
-								 node_grab_x, node.ty)
+				let mmid_x = (node_grab_x + mid_x) / 2
+				this.draw_curve(ctx, 4, node.hue,
+								mid_x, mid_y,
+								mmid_x, mid_y,
+								mmid_x, node.ty,
+								node_grab_x, node.ty)
 			}
 
 			if (node.root_x != undefined) {
@@ -238,11 +257,7 @@ export class Tree {
 			if (node.connections[3])
 				ctx.fillRect(node.rx - t, node.ty - th, t, t)
 
-			if (node.person.sex == sym.MALE) {
-				ctx.fillStyle = "#9999cc"
-			} else {
-				ctx.fillStyle = "#cc9999"
-			}
+			ctx.fillStyle = this.view.color[node.person.sex]
 			ctx.fillRect(node.rx, node.ry, w, h)
 
 			ctx.fillStyle = "#111111"
@@ -253,10 +268,10 @@ export class Tree {
 			if (node.title_ratio)
 				title_ratio = node.title_ratio
 
-			let title_margin = h / 10
-			let title_h = h - title_margin * 2
+			let margin = this.view.margin * zoom
+			let title_h = h - margin * 2
 			let title_w = title_h * title_ratio
-			let info_x = title_margin * 2 + title_w
+			let info_x = margin * 2 + title_w
 
 			let ceil = node.ty - h * 0.3
 			let step = fs * 1.2
@@ -280,8 +295,8 @@ export class Tree {
 
 			if (p.title)
 				ctx.drawImage(p.title,
-							  node.rx + title_margin,
-							  node.ry + title_margin,
+							  node.rx + margin,
+							  node.ry + margin,
 							  title_w,
 							  title_h)
 		}

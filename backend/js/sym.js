@@ -4,6 +4,9 @@
 
 "use strict"
 
+export const COMMON = "common"
+export const LAYOUT = "layout"
+
 export const APPROX = "~"
 
 export const TYPE = "type"

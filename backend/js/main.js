@@ -61,15 +61,26 @@ function read_file(file){
 	}
 }
 
+// TEMP
+let tree_type = "common"
+
 btnTree.addEventListener("click", build_tree)
 
 function build_tree(e) {
 	if (gen == undefined)
 		return
 
-	tree = gen.tree_get()
+	tree = gen.tree_get(tree_type)
 	zoom = tree.fit(canvasMain)
 	tree.draw(canvasMain, zoom, pan_x, pan_y)
+
+	// TEMP
+	if (tree_type == "common") {
+		tree_type = "layout"
+
+	} else if (tree_type == "layout") {
+		tree_type = "common"
+	}
 }
 
 canvasMain.addEventListener("wheel", (e) => {

@@ -32,6 +32,14 @@ export class Gen {
 				break
 			}
 
+		for (let e in this.tar)
+			if (this.tar[e].name == "view.json") {
+				let data = new TextDecoder().decode(this.tar[e].data)
+				this.views = JSON.parse(data)
+				this.tar.splice(e, 1)
+				break
+			}
+
 		if (this.events == undefined) {
 			this.err = "No data.json found"
 			return
@@ -78,6 +86,26 @@ export class Gen {
 				p.update()
 			}
 		}
+
+		// Views
+		for (let i in this.views) {
+			let view = this.views[i]
+			view.w = view.width
+			view.h = view.height
+			view.fw = view.w + view.gap * 2
+			view.fh = view.h + view.gap * 2
+
+			if (sym.LAYOUT in view) {
+				let layout = view[sym.LAYOUT]
+				for (let k in layout) {
+					if (!(sym.SUBJECT in layout[k]))
+						continue
+
+					layout[k][sym.SUBJECT] = this.book[layout[k][sym.SUBJECT]].num
+				}
+			}
+		}
+
 	}
 
 	register(e, role) {
@@ -96,10 +124,20 @@ export class Gen {
 		}
 	}
 
-	tree_get(type, w, h) {
+	tree_get(type) {
 		let tree = new Tree(this.people)
 
-		tree.build(type, w, h)
+		if (type == sym.COMMON) {
+			tree.build()
+
+		} else if (type == sym.LAYOUT) {
+			if (this.views == undefined) {
+				tree.build()
+
+			} else {
+				tree.build(this.views[0])
+			}
+		}
 
 		return tree
 	}
