@@ -50,19 +50,12 @@ export class Gen {
 				case sym.LONGITUDE:
 					e[k] = parseFloat(e[k])
 					break
-
-				case sym.SUBJECT:
-				case sym.FATHER:
-				case sym.MOTHER:
-				case sym.HUSBAND:
-				case sym.WIFE:
-					e[k] = parseInt(e[k])
-					break
 				}
 			}
 		}
 
 		// Parse people
+		this.book = {}
 		this.people = []
 		for (let i = 0; i < this.events.length; i++) {
 			let e = this.events[i]
@@ -91,10 +84,11 @@ export class Gen {
 		if (role in e) {
 			let id = e[role]
 
-			let person = this.people[id]
+			let person = this.book[id]
 			if (person == undefined) {
-				person = new Person(id)
-				this.people[id] = person
+				person = new Person(id, this.people.length)
+				this.book[id] = person
+				this.people.push(person)
 			}
 
 			e[role] = person

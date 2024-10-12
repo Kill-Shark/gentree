@@ -7,8 +7,10 @@ import {GtDate} from "./gtdate.js"
 import * as sym from "./sym.js"
 
 export class Person {
-	constructor(id) {
+	constructor(id, num) {
 		this.id = id
+		this.num = num
+
 		this.subj = []
 		this.part = []
 
@@ -193,12 +195,6 @@ export class Person {
 				}
 				break
 			}
-
-			if (this.title == undefined && sym.ASSETS in e) {
-				let assets = e[sym.ASSETS]
-				if (assets.length > 0)
-					this.title = assets[0]
-			}
 		}
 
 		for (let i = 0; i < this.part.length; i++) {
@@ -225,17 +221,18 @@ export class Person {
 			}
 		}
 
-		if (this.title) {
+		for (let te in this.tar) {
+			let name = this.tar[te].name.split('/').pop()
+			name = name.split('.')[0]
+
+			if (name != this.id)
+				continue
+
+			this.title = this.tar[te].name
 			let ext = this.title.split('.').pop()
 			let img = new Image()
 
-			let data = undefined
-			for (let te in this.tar)
-				if (this.tar[te].name == this.title) {
-					data = this.tar[te].data
-					break
-				}
-
+			let data = this.tar[te].data
 			if (data != undefined) {
 				let len = data.length
 				let bin = [len]
@@ -251,10 +248,6 @@ export class Person {
 				img.onload = function() {
 					this.title_ratio = img.width / img.height
 				}
-
-
-			} else {
-				this.title = undefined
 			}
 		}
 	}

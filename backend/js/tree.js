@@ -31,14 +31,26 @@ const VIEW = {
 
 export class Tree {
 	constructor(people, bg="#222222") {
-		this.people = people
+		let nodes = people.slice()
+		for (let i in people)
+			nodes[i] = new Node(people[i])
 
-		this.nodes = this.people.slice(1)
-		for (let i in this.nodes)
-			this.nodes[i] = new Node(this.nodes[i])
+		for (let i in nodes) {
+			for (let k in people[i].parents) {
+				let p = people[i].parents[k]
+				nodes[i].parents.push(nodes[p.num])
+			}
+			for (let k in people[i].mates) {
+				let p = people[i].mates[k]
+				nodes[i].mates.push(nodes[p.num])
+			}
+			for (let k in people[i].children) {
+				let p = people[i].children[k]
+				nodes[i].children.push(nodes[p.num])
+			}
+		}
 
-		for (let i in this.nodes)
-			this.nodes[i].connect(this.nodes)
+		this.nodes = nodes
 
 		this.bg = bg
 	}

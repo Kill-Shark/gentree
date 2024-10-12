@@ -30,17 +30,6 @@ export class Node {
 		this.connections = [false, false, false, false]
 	}
 
-	connect(nodes) {
-		for (let i in this.person.parents)
-			this.parents.push(nodes[this.person.parents[i].id - 1])
-
-		for (let i in this.person.mates)
-			this.mates.push(nodes[this.person.mates[i].id - 1])
-
-		for (let i in this.person.children)
-			this.children.push(nodes[this.person.children[i].id - 1])
-	}
-
 	is_hidden() {
 		return this.person.hidden
 	}
