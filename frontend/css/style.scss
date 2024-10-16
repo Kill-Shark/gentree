@@ -160,10 +160,25 @@ header{
 }
 
 main{
+	position: relative;
 
-	#canvasMain{
-		width: 1920px;
-		height: 1080px;
+	section{
+		position: absolute;
+		top: 0;
+		display: none;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		margin-left: 50%;
+		margin-top: 10%;
+	}
+
+	.sectionActive{
+		display: block;
+	}
+
+	#sectionTree{
+		display: none;
 	}
 	// .canvas-wrapper{
 	// 	// position: relative;

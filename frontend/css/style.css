@@ -142,7 +142,22 @@ header {
     padding-bottom: 10px;
   }
 }
-main #canvasMain {
-  width: 1920px;
-  height: 1080px;
+main {
+  position: relative;
+}
+main section {
+  position: absolute;
+  top: 0;
+  display: none;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  margin-left: 50%;
+  margin-top: 10%;
+}
+main .sectionActive {
+  display: block;
+}
+main #sectionTree {
+  display: none;
 }/*# sourceMappingURL=style.css.map */

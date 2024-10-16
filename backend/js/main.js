@@ -28,7 +28,11 @@ btnExport = document.getElementById("btnExport");
 
 const dropdown = document.getElementById("dropdown")
 
-const canvasMain = document.getElementById("canvasMain")
+const sectionPerson = document.getElementById("sectionPerson")
+const sectionTree = document.getElementById("sectionTree")
+const sectionEvent = document.getElementById("sectionEvent")
+const sectionDocument = document.getElementById("sectionDocument")
+const sectionMap = document.getElementById("sectionMap")
 
 // автоматическое закрытие панели настроек после нажатия кнопки
 document.querySelectorAll(".dropdown-bar").forEach(n => n.addEventListener("click", ()=>{
@@ -70,8 +74,8 @@ function build_tree(e) {
 		return
 
 	tree = gen.tree_get(tree_type)
-	zoom = tree.fit(canvasMain)
-	tree.draw(canvasMain, zoom, pan_x, pan_y)
+	zoom = tree.fit(sectionTree)
+	tree.draw(sectionTree, zoom, pan_x, pan_y)
 
 	// TEMP
 	if (tree_type == "common") {
@@ -80,9 +84,12 @@ function build_tree(e) {
 	} else if (tree_type == "layout") {
 		tree_type = "common"
 	}
+
+	cleanSectionClasses()
+	sectionTree.style.display = "block";
 }
 
-canvasMain.addEventListener("wheel", (e) => {
+sectionTree.addEventListener("wheel", (e) => {
 	if (e.deltaY < 0) {
 		zoom += 0.1 * zoom
 		pan_x = pan_x + (pan_x - e.x) * 0.1
@@ -95,14 +102,48 @@ canvasMain.addEventListener("wheel", (e) => {
 	}
 
 	if (tree != undefined)
-		tree.draw(canvasMain, zoom, pan_x, pan_y)
+		tree.draw(sectionTree, zoom, pan_x, pan_y)
 });
 
-canvasMain.addEventListener("mousemove", (e) => {
+sectionTree.addEventListener("mousemove", (e) => {
 	if (e.buttons == 1) {
 		pan_x += e.movementX
 		pan_y += e.movementY
 		if (tree != undefined)
-			tree.draw(canvasMain, zoom, pan_x, pan_y)
+			tree.draw(sectionTree, zoom, pan_x, pan_y)
 	}
 });
+
+function cleanSectionClasses(){
+	sectionPerson.classList.remove("sectionActive")
+	sectionTree.style.display = "none";
+	sectionEvent.classList.remove("sectionActive")
+	sectionDocument.classList.remove("sectionActive")
+	sectionMap.classList.remove("sectionActive")
+
+}
+
+btnEvent.addEventListener("click", switchToEventSection)
+btnPerson.addEventListener("click", switchToPersonSection)
+btnDocs.addEventListener("click", switchToDocumentSection)
+btnMaps.addEventListener("click", switchToMapsSection)
+
+function switchToEventSection(){
+	cleanSectionClasses()
+	sectionEvent.classList.add("sectionActive")
+}
+
+function switchToPersonSection(){
+	cleanSectionClasses()
+	sectionPerson.classList.add("sectionActive")
+}
+
+function switchToDocumentSection(){
+	cleanSectionClasses()
+	sectionDocument.classList.add("sectionActive")
+}
+
+function switchToMapsSection(){
+	cleanSectionClasses()
+	sectionMap.classList.add("sectionActive")
+}
